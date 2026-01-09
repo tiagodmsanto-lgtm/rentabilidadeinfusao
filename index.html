@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rentabilidade de Infusões</title>
+    <style>
+        :root {
+            --bg-color: #1a1a2e;
+            --card-bg: #16213e;
+            --accent: #0f3460;
+            --highlight: #e94560;
+            --text: #e0e0e0;
+            --success: #4caf50;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1 { color: var(--highlight); text-transform: uppercase; letter-spacing: 2px; }
+        h2, h3 { color: #fff; border-bottom: 2px solid var(--accent); padding-bottom: 5px; }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+            background-color: var(--card-bg);
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            padding: 20px;
+        }
+
+        /* Tabs */
+        .tabs { display: flex; cursor: pointer; margin-bottom: 20px; }
+        .tab {
+            flex: 1;
+            padding: 15px;
+            background-color: var(--accent);
+            text-align: center;
+            font-weight: bold;
+            transition: 0.3s;
+            border: 1px solid var(--bg-color);
+        }
+        .tab:hover { background-color: #1a1a2e; }
+        .tab.active {
+            background-color: var(--highlight);
+            color: white;
+            border-bottom: none;
+        }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.5s; }
+
+        /* Forms & Inputs */
+        .control-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; color: #aaa; }
+        input, select {
+            width: 100%;
+            padding: 10px;
+            background-color: #0f3460;
+            border: 1px solid #333;
+            color: white;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+
+        .row { display: flex; gap: 15px; flex-wrap: wrap; }
+        .col { flex: 1; min-width: 200px; }
+
+        /* Buttons */
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: var(--success);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            margin-top: 10px;
+            transition: 0.2s;
+        }
+        button:hover { filter: brightness(1.1); }
+        .btn-secondary { background-color: var(--highlight); }
+
+        /* Results */
+        .result-box {
+            background-color: rgba(0,0,0,0.2);
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 15px;
+            border-left: 5px solid var(--highlight);
+        }
+        .result-value { font-size: 1.2em; font-weight: bold; color: var(--success); }
+
+        /* Table */
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #333; }
+        th { background-color: var(--accent); }
+        
+        .inventory-input { width: 80px; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Rentabilidade de Infusões</h1>
+
+    <div class="container">
+        <div class="tabs">
+            <div class="tab active" onclick="switchTab('farm')">Aba 1: Farm & Coleta</div>
+            <div class="tab" onclick="switchTab('value')">Aba 2: Valor & Inventário</div>
+        </div>
+
+        <div id="farm" class="tab-content active">
+            <h2>Calculadora de Coleta</h2>
+            
+            <div class="row">
+                <div class="col">
+                    <div class="control-group">
+                        <label>Tipo de Infusão</label>
+                        <select id="farmType">
+                            <option value="10">Infusion (10 xp)</option>
+                            <option value="20">Warband Infusion (20 xp)</option>
+                            <option value="40">Ancient Infusion (40 xp)</option>
+                            <option value="60">Carved Infusion (60 xp)</option>
+                            <option value="75">Ghostly Infusion (75 xp)</option>
+                            <option value="90">Ornate Infusion (90 xp)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="control-group">
+                        <label>Tempo de Farm (Minutos)</label>
+                        <input type="number" id="farmTime" placeholder="Ex: 60">
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="control-group">
+                        <label>Quantidade Coletada</label>
+                        <input type="number" id="farmQty" placeholder="Ex: 50">
+                    </div>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label>Visualizar Rendimento Médio por:</label>
+                <select id="farmTimeFrame">
+                    <option value="60">Hora</option>
+                    <option value="30">30 Minutos</option>
+                    <option value="10">10 Minutos</option>
+                    <option value="1">1 Minuto</option>
+                </select>
+            </div>
+
+            <button onclick="calculateFarm()">Calcular Rendimento</button>
+            <div id="farmResult" class="result-box" style="display:none;"></div>
+
+            <br><hr><br>
+
+            <h3>Comparar Taxa de Coleta (X vs Y)</h3>
+            <p style="font-size: 0.9em; color: #aaa;">Insira os dados de dois testes diferentes para ver qual rende mais XP.</p>
+            
+            <div class="row">
+                <div class="col" style="background: rgba(255,255,255,0.05); padding: 10px; border-radius: 5px;">
+                    <h4>Cenário A</h4>
+                    <select id="compTypeA" style="margin-bottom: 5px;">
+                        <option value="10">Infusion (10 xp)</option>
+                        <option value="20">Warband Infusion (20 xp)</option>
+                        <option value="40">Ancient Infusion (40 xp)</option>
+                        <option value="60">Carved Infusion (60 xp)</option>
+                        <option value="75">Ghostly Infusion (75 xp)</option>
+                        <option value="90">Ornate Infusion (90 xp)</option>
+                    </select>
+                    <input type="number" id="compTimeA" placeholder="Minutos" style="margin-bottom: 5px;">
+                    <input type="number" id="compQtyA" placeholder="Qtd Coletada">
+                </div>
+
+                <div class="col" style="background: rgba(255,255,255,0.05); padding: 10px; border-radius: 5px;">
+                    <h4>Cenário B</h4>
+                    <select id="compTypeB" style="margin-bottom: 5px;">
+                        <option value="10">Infusion (10 xp)</option>
+                        <option value="20" selected>Warband Infusion (20 xp)</option>
+                        <option value="40">Ancient Infusion (40 xp)</option>
+                        <option value="60">Carved Infusion (60 xp)</option>
+                        <option value="75">Ghostly Infusion (75 xp)</option>
+                        <option value="90">Ornate Infusion (90 xp)</option>
+                    </select>
+                    <input type="number" id="compTimeB" placeholder="Minutos" style="margin-bottom: 5px;">
+                    <input type="number" id="compQtyB" placeholder="Qtd Coletada">
+                </div>
+            </div>
+
+            <div class="control-group" style="margin-top: 10px;">
+                <label>Comparar baseado em (Tempo):</label>
+                <select id="compTimeFrame">
+                    <option value="60">Hora</option>
+                    <option value="30">30 Minutos</option>
+                    <option value="10">10 Minutos</option>
+                    <option value="1">1 Minuto</option>
+                </select>
+            </div>
+
+            <button class="btn-secondary" onclick="compareFarm()">Comparar Eficiência</button>
+            <div id="compResult" class="result-box" style="display:none;"></div>
+        </div>
+
+        <div id="value" class="tab-content">
+            <h2>Conversão de Silver & Inventário</h2>
+            
+            <div class="control-group">
+                <label style="color: var(--highlight); font-weight: bold;">Preço de 1 XP (em Silver):</label>
+                <input type="number" id="pricePerXP" placeholder="Ex: 5" oninput="updateValues()">
+            </div>
+
+            <h3>Tabela de Valores & Seu Inventário</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Infusão</th>
+                        <th>XP Unit.</th>
+                        <th>Valor (Silver)</th>
+                        <th>Seu Estoque</th>
+                    </tr>
+                </thead>
+                <tbody id="inventoryTable">
+                    </tbody>
+            </table>
+
+            <div class="result-box" id="totalInventoryBox">
+                <div>Total de XP no Inventário: <span id="totalXP" class="result-value">0</span> XP</div>
+                <div style="margin-top: 10px;">Valor Total Estimado: <span id="totalSilver" class="result-value">0</span> Silver</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Dados das Infusões
+        const infusionsData = [
+            { name: "Infusion", xp: 10 },
+            { name: "Warband Infusion", xp: 20 },
+            { name: "Ancient Infusion", xp: 40 },
+            { name: "Carved Infusion", xp: 60 },
+            { name: "Ghostly Infusion", xp: 75 },
+            { name: "Ornate Infusion", xp: 90 }
+        ];
+
+        // Lógica de Abas
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            
+            document.getElementById(tabName).classList.add('active');
+            // Encontra o botão da aba correspondente (simplificado)
+            const tabs = document.querySelectorAll('.tab');
+            if(tabName === 'farm') tabs[0].classList.add('active');
+            else tabs[1].classList.add('active');
+        }
+
+        // --- ABA 1: FARM ---
+
+        function calculateFarm() {
+            const xpPerItem = parseInt(document.getElementById('farmType').value);
+            const minutes = parseFloat(document.getElementById('farmTime').value);
+            const qty = parseInt(document.getElementById('farmQty').value);
+            const frame = parseInt(document.getElementById('farmTimeFrame').value);
+            const frameText = document.getElementById('farmTimeFrame').options[document.getElementById('farmTimeFrame').selectedIndex].text;
+
+            if (!minutes || !qty) {
+                alert("Por favor, preencha o tempo e a quantidade.");
+                return;
+            }
+
+            const totalXP = qty * xpPerItem;
+            const xpPerMinute = totalXP / minutes;
+            const resultXP = xpPerMinute * frame;
+
+            const div = document.getElementById('farmResult');
+            div.style.display = 'block';
+            div.innerHTML = `
+                <div>Baseado nos seus dados:</div>
+                <div class="result-value">${resultXP.toLocaleString('pt-BR', {maximumFractionDigits: 0})} XP</div>
+                <div>a cada <strong>${frameText}</strong></div>
+            `;
+        }
+
+        function compareFarm() {
+            // Cenário A
+            const xpA = parseInt(document.getElementById('compTypeA').value);
+            const timeA = parseFloat(document.getElementById('compTimeA').value);
+            const qtyA = parseInt(document.getElementById('compQtyA').value);
+            
+            // Cenário B
+            const xpB = parseInt(document.getElementById('compTypeB').value);
+            const timeB = parseFloat(document.getElementById('compTimeB').value);
+            const qtyB = parseInt(document.getElementById('compQtyB').value);
+
+            const frame = parseInt(document.getElementById('compTimeFrame').value);
+            const frameText = document.getElementById('compTimeFrame').options[document.getElementById('compTimeFrame').selectedIndex].text;
+
+            if (!timeA || !qtyA || !timeB || !qtyB) {
+                alert("Preencha todos os campos dos dois cenários.");
+                return;
+            }
+
+            // Calculo A
+            const rateA = ((qtyA * xpA) / timeA) * frame;
+            // Calculo B
+            const rateB = ((qtyB * xpB) / timeB) * frame;
+
+            const div = document.getElementById('compResult');
+            div.style.display = 'block';
+
+            let winnerText = "";
+            if (rateA > rateB) winnerText = "<span style='color:cyan'>Cenário A é mais rentável.</span>";
+            else if (rateB > rateA) winnerText = "<span style='color:cyan'>Cenário B é mais rentável.</span>";
+            else winnerText = "Os dois cenários têm rendimento idêntico.";
+
+            div.innerHTML = `
+                <strong>${winnerText}</strong><br><br>
+                Cenário A: ${rateA.toLocaleString('pt-BR', {maximumFractionDigits: 0})} XP / ${frameText}<br>
+                Cenário B: ${rateB.toLocaleString('pt-BR', {maximumFractionDigits: 0})} XP / ${frameText}<br>
+                <small>Diferença: ${Math.abs(rateA - rateB).toLocaleString('pt-BR', {maximumFractionDigits: 0})} XP</small>
+            `;
+        }
+
+        // --- ABA 2: VALOR & INVENTÁRIO ---
+
+        function initInventoryTable() {
+            const tbody = document.getElementById('inventoryTable');
+            tbody.innerHTML = '';
+
+            infusionsData.forEach((inf, index) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${inf.name}</td>
+                    <td>${inf.xp} XP</td>
+                    <td id="val-${index}">0</td>
+                    <td><input type="number" class="inventory-input" data-xp="${inf.xp}" oninput="updateValues()" placeholder="0"></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function updateValues() {
+            const pricePerXP = parseFloat(document.getElementById('pricePerXP').value) || 0;
+            let totalXP = 0;
+            let totalSilver = 0;
+
+            // Atualizar valores unitários e calcular totais
+            const inputs = document.querySelectorAll('.inventory-input');
+            
+            inputs.forEach((input, index) => {
+                const xpAmount = parseFloat(input.getAttribute('data-xp'));
+                const qty = parseFloat(input.value) || 0;
+                
+                // Valor Unitário
+                const unitValue = xpAmount * pricePerXP;
+                document.getElementById(`val-${index}`).innerText = unitValue.toLocaleString('pt-BR') + " Silver";
+
+                // Totais
+                const stackXP = qty * xpAmount;
+                const stackValue = stackXP * pricePerXP;
+
+                totalXP += stackXP;
+                totalSilver += stackValue;
+            });
+
+            document.getElementById('totalXP').innerText = totalXP.toLocaleString('pt-BR');
+            document.getElementById('totalSilver').innerText = totalSilver.toLocaleString('pt-BR');
+        }
+
+        // Inicializar
+        initInventoryTable();
+    </script>
+</body>
+</html>
